@@ -85,7 +85,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ needs.prepare.outputs.owner }}/site
+          images: ghcr.io/${{ needs.prepare.outputs.owner }}/site-web
           tags: |
             type=raw,value=main
             type=sha,prefix=sha-
@@ -93,7 +93,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: Dockerfile
+          file: web/Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           push: true
@@ -114,4 +114,4 @@ jobs:
             --severity HIGH,CRITICAL \
             --ignore-unfixed \
             --exit-code 1 \
-            ghcr.io/${{ needs.prepare.outputs.owner }}/site@${{ steps.build.outputs.digest }}
+            ghcr.io/${{ needs.prepare.outputs.owner }}/site-web@${{ steps.build.outputs.digest }}

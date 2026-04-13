@@ -3,3 +3,8 @@ dist
 dist-ssr
 .vite
 .vite-temp
+web/node_modules
+web/dist
+web/dist-ssr
+web/.vite
+web/.vite-temp

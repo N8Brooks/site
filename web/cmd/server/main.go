@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	siteassets "github.com/N8Brooks/site"
-	"github.com/N8Brooks/site/internal/server"
+	siteassets "github.com/N8Brooks/site/web"
+	"github.com/N8Brooks/site/web/internal/server"
 )
 
 const httpAddr = ":8080"

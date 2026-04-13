@@ -29,10 +29,10 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: Dockerfile
+          file: web/Dockerfile
           load: true
           push: false
-          tags: site:ci
+          tags: site-web:ci
       - name: Prepare Trivy cache
         run: mkdir -p .cache/trivy
       - name: Scan image
@@ -45,4 +45,4 @@ jobs:
             --severity HIGH,CRITICAL \
             --ignore-unfixed \
             --exit-code 1 \
-            site:ci
+            site-web:ci

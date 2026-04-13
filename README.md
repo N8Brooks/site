@@ -1,24 +1,17 @@
-# naterpatater.com
+# site
 
-Minimal root-domain site for `naterpatater.com`.
+Monorepo for `naterpatater.com`.
 
-It is intentionally small:
+## Layout
 
-- one static React page for the public site
-- AdSense verification snippet in the root HTML
-- a tiny Go server for production asset delivery, health checks, and security headers
-- Docker and GitHub Actions for CI, image scanning, and GHCR publication
+- `web/`: the root-domain site, including the React app, embedded Go server, Dockerfile, and app-specific docs
+- `k8s/`: Kubernetes manifests for deploying the site by itself
+- `clusters/homelab/`: Flux entrypoint that applies the site manifests from this repo
 
-## Local development
-
-Requirements:
-
-- Node 24+
-- Go 1.26+
-
-Commands:
+## Local app development
 
 ```sh
+cd web
 npm install
 npm run dev
 ```
@@ -26,36 +19,15 @@ npm run dev
 ## Verification
 
 ```sh
+cd web
 npm run lint
 npm run build
 go test ./cmd/server ./internal/...
 GOCACHE=/tmp/go-build GOMODCACHE=/tmp/gomodcache go build -o /tmp/site ./cmd/server
 ```
 
-The Go server expects `dist/` to exist, so run `npm run build` before Go build or test commands.
+## Image and deployment
 
-## Container
-
-Build the production image:
-
-```sh
-docker build -t site:local .
-```
-
-Run it locally:
-
-```sh
-docker run --rm -p 8080:8080 site:local
-```
-
-## Deployment
-
-GitHub Actions provides:
-
-- `ci`: lint, frontend build, Go tests, and Go build
-- `docker`: image build plus Trivy scan
-- `release`: multi-arch push to `ghcr.io/<owner>/site` from `main`
-
-## Attribution
-
-See [docs/attribution.md](docs/attribution.md).
+- Docker image: `ghcr.io/<owner>/site-web`
+- Flux path for this repo: `./clusters/homelab`
+- External Flux repo should add a `GitRepository` for `ssh://git@github.com/N8Brooks/site` and a `Kustomization` that points at `./clusters/homelab`

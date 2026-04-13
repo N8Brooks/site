@@ -12,13 +12,16 @@ permissions:
 jobs:
   frontend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: web/package-lock.json
       - name: Install dependencies
         run: npm install
       - name: Lint
@@ -28,20 +31,23 @@ jobs:
 
   server:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: web/package-lock.json
       - name: Install frontend dependencies
         run: npm install
       - name: Build frontend assets
         run: npm run build
       - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
+          go-version-file: web/go.mod
       - name: Test server
         run: go test ./cmd/server ./internal/...
       - name: Build server
