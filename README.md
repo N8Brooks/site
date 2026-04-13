@@ -1,73 +1,61 @@
-# React + TypeScript + Vite
+# naterpatater.com
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Minimal root-domain site for `naterpatater.com`.
 
-Currently, two official plugins are available:
+It is intentionally small:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- one static React page for the public site
+- AdSense verification snippet in the root HTML
+- a tiny Go server for production asset delivery, health checks, and security headers
+- Docker and GitHub Actions for CI, image scanning, and GHCR publication
 
-## React Compiler
+## Local development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Requirements:
 
-## Expanding the ESLint configuration
+- Node 24+
+- Go 1.26+
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Commands:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Verification
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm run lint
+npm run build
+go test ./cmd/server ./internal/...
+GOCACHE=/tmp/go-build GOMODCACHE=/tmp/gomodcache go build -o /tmp/site ./cmd/server
 ```
+
+The Go server expects `dist/` to exist, so run `npm run build` before Go build or test commands.
+
+## Container
+
+Build the production image:
+
+```sh
+docker build -t site:local .
+```
+
+Run it locally:
+
+```sh
+docker run --rm -p 8080:8080 site:local
+```
+
+## Deployment
+
+GitHub Actions provides:
+
+- `ci`: lint, frontend build, Go tests, and Go build
+- `docker`: image build plus Trivy scan
+- `release`: multi-arch push to `ghcr.io/<owner>/site` from `main`
+
+## Attribution
+
+See [docs/attribution.md](docs/attribution.md).
