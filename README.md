@@ -6,7 +6,7 @@ Monorepo for `naterpatater.com`.
 
 - `web/`: the root-domain site, including the React app, embedded Go server, Dockerfile, and app-specific docs
 - `k8s/`: Kubernetes manifests for deploying the site by itself
-- `clusters/homelab/`: Flux entrypoint that applies the site manifests from this repo
+- `clusters/homelab/`: temporary legacy Flux entrypoint kept only until `homelab-cluster` fully takes over the live cluster
 
 ## Local app development
 
@@ -29,5 +29,6 @@ GOCACHE=/tmp/go-build GOMODCACHE=/tmp/gomodcache go build -o /tmp/site ./cmd/ser
 ## Image and deployment
 
 - Docker image: `ghcr.io/<owner>/site-web`
-- Flux path for this repo: `./clusters/homelab`
-- External Flux repo should add a `GitRepository` for `ssh://git@github.com/N8Brooks/site` and a `Kustomization` that points at `./clusters/homelab`
+- Canonical homelab deployment repo: `ssh://git@github.com/N8Brooks/homelab-cluster`
+- Canonical Flux path: `./clusters/homelab` in the `homelab-cluster` repo
+- This repo should only build and publish `site-web`; do not add new homelab-specific deploy state here
