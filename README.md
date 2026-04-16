@@ -6,7 +6,6 @@ Monorepo for `naterpatater.com`.
 
 - `web/`: the root-domain site, including the React app, embedded Go server, Dockerfile, and app-specific docs
 - `k8s/`: Kubernetes manifests for deploying the site by itself
-- `clusters/homelab/`: temporary legacy Flux entrypoint kept only until `homelab-cluster` fully takes over the live cluster
 
 ## Local app development
 
