@@ -22,7 +22,7 @@ spec:
       containers:
         - name: web
           image: ghcr.io/n8brooks/site-web:main
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080
