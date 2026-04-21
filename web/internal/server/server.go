@@ -164,7 +164,7 @@ func withSecurityHeaders(next http.Handler) http.Handler {
 				"img-src 'self' data: https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com; "+
 				"style-src 'self' 'unsafe-inline'; "+
 				"script-src 'self' https://pagead2.googlesyndication.com https://static.cloudflareinsights.com https://ep2.adtrafficquality.google; "+
-				"frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com; "+
+				"frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://ep2.adtrafficquality.google https://www.google.com; "+
 				"object-src 'none'; base-uri 'self'; frame-ancestors 'none';",
 		)
 		next.ServeHTTP(w, r)
