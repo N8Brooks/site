@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -124,11 +125,37 @@ func TestAddsSecurityHeadersAndHealthEndpoints(t *testing.T) {
 	}
 }
 
+func TestIndexScriptNonceMatchesStrictCSP(t *testing.T) {
+	t.Parallel()
+
+	handler := mustHandler(t)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, req)
+
+	csp := recorder.Header().Get("Content-Security-Policy")
+	match := regexp.MustCompile(`script-src 'nonce-([^']+)'`).FindStringSubmatch(csp)
+	if len(match) != 2 {
+		t.Fatalf("content-security-policy = %q, want script nonce", csp)
+	}
+	if !strings.Contains(csp, "'strict-dynamic'") {
+		t.Fatalf("content-security-policy = %q, want strict-dynamic", csp)
+	}
+	if strings.Contains(csp, "pagead2.googlesyndication.com") {
+		t.Fatalf("content-security-policy = %q, want no AdSense domain allowlist", csp)
+	}
+
+	wantScript := `<script nonce="` + match[1] + `" src="/assets/app.js"></script>`
+	if body := recorder.Body.String(); !strings.Contains(body, wantScript) {
+		t.Fatalf("index body = %q, want nonce-bearing script %q", body, wantScript)
+	}
+}
+
 func mustHandler(t *testing.T) http.Handler {
 	t.Helper()
 
 	handler, err := New(fstest.MapFS{
-		"dist/index.html":       {Data: []byte("<!doctype html><title>naterpatater.com</title>")},
+		"dist/index.html":       {Data: []byte(`<!doctype html><title>naterpatater.com</title><script src="/assets/app.js"></script>`)},
 		"dist/assets/app.js":    {Data: []byte(strings.Repeat("console.log('site');", 40))},
 		"dist/favicon.ico":      {Data: []byte("icon")},
 		"dist/site.webmanifest": {Data: []byte(`{"name":"naterpatater.com"}`)},

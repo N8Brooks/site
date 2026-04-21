@@ -3,7 +3,11 @@ package server
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
+	"html"
 	"io/fs"
 	"mime"
 	"net/http"
@@ -18,6 +22,8 @@ const (
 	htmlCacheControl            = "no-cache"
 	healthCacheControl          = "no-store"
 )
+
+type nonceContextKey struct{}
 
 type Handler struct {
 	files     fs.FS
@@ -113,6 +119,10 @@ func (h *Handler) writeStatic(w http.ResponseWriter, r *http.Request, status int
 		contentType = http.DetectContentType(body)
 	}
 
+	if name == "dist/index.html" {
+		body = addScriptNonce(body, nonceFromContext(r.Context()))
+	}
+
 	w.Header().Set("Cache-Control", cacheControl)
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Add("Vary", "Accept-Encoding")
@@ -150,6 +160,12 @@ func isCompressible(contentType string) bool {
 
 func withSecurityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nonce, err := newNonce()
+		if err != nil {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -159,14 +175,31 @@ func withSecurityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Permitted-Cross-Domain-Policies", "none")
 		w.Header().Set(
 			"Content-Security-Policy",
-			"default-src 'self'; "+
-				"connect-src 'self' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://ep1.adtrafficquality.google https://cloudflareinsights.com; "+
-				"img-src 'self' data: https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://ep1.adtrafficquality.google; "+
-				"style-src 'self' 'unsafe-inline'; "+
-				"script-src 'self' https://pagead2.googlesyndication.com https://static.cloudflareinsights.com https://ep2.adtrafficquality.google; "+
-				"frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://ep2.adtrafficquality.google https://www.google.com; "+
-				"object-src 'none'; base-uri 'self'; frame-ancestors 'none';",
+			"object-src 'none'; "+
+				"script-src 'nonce-"+nonce+"' 'unsafe-inline' 'unsafe-eval' 'strict-dynamic' https: http:; "+
+				"base-uri 'none'; "+
+				"frame-ancestors 'none';",
 		)
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), nonceContextKey{}, nonce)))
 	})
+}
+
+func newNonce() (string, error) {
+	var nonce [18]byte
+	if _, err := rand.Read(nonce[:]); err != nil {
+		return "", err
+	}
+	return base64.RawStdEncoding.EncodeToString(nonce[:]), nil
+}
+
+func nonceFromContext(ctx context.Context) string {
+	nonce, _ := ctx.Value(nonceContextKey{}).(string)
+	return nonce
+}
+
+func addScriptNonce(body []byte, nonce string) []byte {
+	if nonce == "" {
+		return body
+	}
+	return []byte(strings.ReplaceAll(string(body), "<script", `<script nonce="`+html.EscapeString(nonce)+`"`))
 }
